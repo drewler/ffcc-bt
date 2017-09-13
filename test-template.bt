@@ -22,10 +22,19 @@ typedef struct {
 
 header CHM_header;
 
+local int data_start;
+local int i;
 while((FTell() + sizeof(header)) < FileSize()){
     header new_header;
-    FSkip(new_header.size);
+    data_start = FTell();
+    
+    for(i = 0; i < new_header.unknown00 - 1; i++){
+        header sub_header;
+        FSkip(sub_header.size);
+    }
+    FSeek(data_start + new_header.size);
 }
+
 /*local int i;
 local int tag_start;
 for(i=0; i < CHM_header.n_elems; i++){
