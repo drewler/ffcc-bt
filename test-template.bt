@@ -1,0 +1,35 @@
+//------------------------------------------------
+//--- 010 Editor v7.0.2 Binary Template
+//
+//      File: 
+//   Authors: 
+//   Version: 
+//   Purpose: 
+//  Category: 
+// File Mask: 
+//  ID Bytes: 
+//   History: 
+//------------------------------------------------
+
+BigEndian();
+
+typedef struct {
+    char name[4];
+    unsigned int size;
+    unsigned int unknown00;
+    unsigned int unknown01;
+} header;
+
+header CHM_header;
+
+while((FTell() + sizeof(header)) < FileSize()){
+    header new_header;
+    FSkip(new_header.size);
+}
+/*local int i;
+local int tag_start;
+for(i=0; i < CHM_header.n_elems; i++){
+    tag_start = FTell();
+    header;
+    //unsigned int size;
+    FSeek(tag_start + CHM_header.size);*/
