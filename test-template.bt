@@ -1,23 +1,11 @@
-//------------------------------------------------
-//--- 010 Editor v7.0.2 Binary Template
-//
-//      File: 
-//   Authors: 
-//   Version: 
-//   Purpose: 
-//  Category: 
-// File Mask: 
-//  ID Bytes: 
-//   History: 
-//------------------------------------------------
+// CHM file parser
+// Author: @drewler
 
 BigEndian();
 
 void pad(int start, int size){
     FSeek(start + size);
-    //Printf("FTell: %x\n", FTell());
     if(FTell()%16 != 0){
-        //Printf("%d\n", 16 - FTell()%16);
         FSkip(16 - FTell()%16);
     }
 }
@@ -31,20 +19,10 @@ typedef struct {
 
 typedef struct {
     HEADER header;
-    char unk_data[header.size];
-} INFO;
-
-typedef struct {
-    HEADER header;
-    char unk_data[header.size];
-} QUAN;
-
-typedef struct {
-    HEADER header;
     local int start = FTell();
-    //MATL matl[header.unknown00];
+    char unk_data[header.size];
     pad(start, header.size);
-} MSET;
+} UNKNOWN;
 
 typedef struct {
     HEADER header;
@@ -52,6 +30,25 @@ typedef struct {
     char name[header.size];
     pad(start, header.size);
 } NAME;
+
+typedef struct {
+    HEADER header;
+    local int start = FTell();
+    UNKNOWN tidx;
+    NAME name;
+    UNKNOWN atrb;
+    if(FTell() - start < header.size - 16){
+        UNKNOWN bump;
+    }
+    pad(start, header.size);
+} MATL;
+
+typedef struct {
+    HEADER header;
+    local int start = FTell();
+    MATL matl[header.unknown00] <optimize=false>;
+    pad(start, header.size);
+} MSET;
 
 typedef struct {
     short point[3];
@@ -78,23 +75,9 @@ typedef struct {
 typedef struct {
     HEADER header;
     local int start = FTell();
-    char unk_data[header.size];
-    pad(start, header.size);
-} COLR;
-
-typedef struct {
-    HEADER header;
-    local int start = FTell();
     POINT2S uv[header.size/4];
     pad(start, header.size);
 } UV;
-
-typedef struct {
-    HEADER header;
-    local int start = FTell();
-    char unk_data[header.size];
-    pad(start, header.size);
-} SKIN_NODE;
 
 typedef struct {
     unsigned short gid[2];
@@ -114,7 +97,7 @@ typedef struct {
 typedef struct {
     HEADER header;
     local int start = FTell();
-    SKIN_NODE node[header.unknown00] <optimize=false>;
+    UNKNOWN node[header.unknown00] <optimize=false>;
     ONE one;
     pad(start, header.size);
 } SKIN;
@@ -128,12 +111,8 @@ typedef struct {
 } ELEM5S;
 
 typedef struct {
-    /*while(ReadByte() == 0x00){
-        FSkip(1);
-    }*/
     unsigned char ltype;
     unsigned short lsize;
-    //Printf("lsize: %d\n", lsize);
     // TO-DO: Check ltype as a bitfield
     switch (ltype) {
         case 0x90:
@@ -157,7 +136,6 @@ typedef struct {
     unsigned short id;
     FSkip(header.size - header.unknown00 - sizeof(id));
     while((FTell() - start) < (header.size - 30)){
-        //Printf("Read: %d - Size: %d\n", (FTell() - start), header.size);
         LST_E lst_e;
     }
     pad(start, header.size);
@@ -173,11 +151,11 @@ typedef struct {
 typedef struct {
     HEADER header;
     local int start = FTell();
-    INFO info;
+    UNKNOWN info;
     NAME mnam;
     VERT vert;
     NORM norm;
-    COLR colr;
+    UNKNOWN colr;
     UV   uv;
     SKIN skin;
     DLHD dlhd;
@@ -199,37 +177,21 @@ typedef struct {
 typedef struct {
     HEADER header;
     local int start = FTell();
-    char unk_data[header.size];
-    pad(start, header.size);
-} MIDX;
-
-typedef struct {
-    HEADER header;
-    local int start = FTell();
-    char unk_data[header.size];
-    pad(start, header.size);
-} BINF;
-
-typedef struct {
-    HEADER header;
-    local int start = FTell();
-    INFO info;
+    UNKNOWN info;
     NAME name;
-    //if (info.unk_data[15] == 0x01){
     local char next_tag[5];
     ReadBytes(next_tag, FTell(), 4);
     next_tag[4] = '\0';
     if(next_tag == "NAM2"){
         NAME name2;
     }
-    //}
     TFRM tfrm;
     switch (header.unknown00){
         case 0x01:
-            MIDX midx;
+            UNKNOWN midx;
             break;
         case 0x02:
-            BINF binf;
+            UNKNOWN binf;
             break;
     }
     pad(start, header.size);
@@ -244,17 +206,12 @@ typedef struct {
 
 typedef struct {
     HEADER header;
-    char unk_data[header.size];
-} BANK;
-
-typedef struct {
-    HEADER header;
-    INFO  info;
-    QUAN  quan;
-    MSET  mset;
+    UNKNOWN info;
+    UNKNOWN quan;
+    MSET mset;
     MSSET msset;
-    NSET  nset;
-    BANK  bank;
+    NSET nset;
+    UNKNOWN bank;
 } CHM;
 
 CHM chm;
