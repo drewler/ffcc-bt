@@ -1,0 +1,61 @@
+// TEX file parser
+// Author: @drewler
+
+BigEndian();
+
+void pad(int start, int size){
+    FSeek(start + size);
+    if(FTell()%16 != 0){
+        FSkip(16 - FTell()%16);
+    }
+}
+
+typedef struct {
+    char name[4];
+    unsigned int size;
+    unsigned int unknown00;
+    unsigned int unknown01;
+} HEADER;
+
+typedef struct {
+    HEADER header;
+    local int start = FTell();
+    char unk_data[header.size];
+    pad(start, header.size);
+} UNKNOWN;
+
+typedef struct {
+    HEADER header;
+    local int start = FTell();
+    char name[header.size];
+    pad(start, header.size);
+} NAME;
+
+typedef struct {
+    HEADER header;
+    NAME name;
+    UNKNOWN fmt;
+    UNKNOWN size;
+    UNKNOWN imag;
+} TXTR;
+
+typedef struct {
+    HEADER header;
+    local int start = FTell();
+    while((FTell() - start) < (header.size - 30)){
+        TXTR txtr;
+    }
+    pad(start, header.size);
+} TSET;
+
+typedef struct {
+    HEADER header;
+    TSET tset;
+} SCEN;
+
+typedef struct {
+    HEADER header;
+    SCEN scen;
+} TEX;
+
+TEX tex;
