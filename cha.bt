@@ -1,0 +1,54 @@
+// CHA file parser
+// Author: @drewler
+
+BigEndian();
+
+void pad(int start, int size){
+    FSeek(start + size);
+    if(FTell()%16 != 0){
+        FSkip(16 - FTell()%16);
+    }
+}
+
+typedef struct {
+    char name[4];
+    unsigned int size;
+    unsigned int unknown00;
+    unsigned int unknown01;
+} HEADER;
+
+typedef struct {
+    HEADER header;
+    local int start = FTell();
+    char unk_data[header.size];
+    pad(start, header.size);
+} UNKNOWN;
+
+typedef struct {
+    HEADER header;
+    local int start = FTell();
+    char name[header.size];
+    pad(start, header.size);
+} NAME;
+
+typedef struct {
+    HEADER header;
+    NAME name;
+    UNKNOWN data;
+} NODE;
+
+typedef struct {
+    HEADER header;
+    UNKNOWN fram;
+    UNKNOWN info;
+    NODE node[header.unknown00] <optimize=false>;
+} ANIM;
+
+typedef struct {
+    HEADER header;
+    ANIM anim;
+    UNKNOWN intp;
+    UNKNOWN bank;
+} CHA;
+
+CHA cha;
