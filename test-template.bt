@@ -13,32 +13,243 @@
 
 BigEndian();
 
+void pad(int start, int size){
+    FSeek(start + size);
+    //Printf("FTell: %x\n", FTell());
+    if(FTell()%16 != 0){
+        //Printf("%d\n", 16 - FTell()%16);
+        FSkip(16 - FTell()%16);
+    }
+}
+
 typedef struct {
     char name[4];
     unsigned int size;
     unsigned int unknown00;
     unsigned int unknown01;
-} header;
+} HEADER;
 
-header CHM_header;
+typedef struct {
+    HEADER header;
+    char unk_data[header.size];
+} INFO;
 
-local int data_start;
-local int i;
-while((FTell() + sizeof(header)) < FileSize()){
-    header new_header;
-    data_start = FTell();
-    
-    for(i = 0; i < new_header.unknown00 - 1; i++){
-        header sub_header;
-        FSkip(sub_header.size);
+typedef struct {
+    HEADER header;
+    char unk_data[header.size];
+} QUAN;
+
+typedef struct {
+    HEADER header;
+    local int start = FTell();
+    //MATL matl[header.unknown00];
+    pad(start, header.size);
+} MSET;
+
+typedef struct {
+    HEADER header;
+    local int start = FTell();
+    char name[header.size];
+    pad(start, header.size);
+} NAME;
+
+typedef struct {
+    short point[3];
+} POINT3S;
+
+typedef struct {
+    short point[2];
+} POINT2S;
+
+typedef struct {
+    HEADER header;
+    local int start = FTell();
+    POINT3S vertice[header.size/6];
+    pad(start, header.size);
+} VERT;
+
+typedef struct {
+    HEADER header;
+    local int start = FTell();
+    POINT3S normal[header.size/6];
+    pad(start, header.size);
+} NORM;
+
+typedef struct {
+    HEADER header;
+    local int start = FTell();
+    char unk_data[header.size];
+    pad(start, header.size);
+} COLR;
+
+typedef struct {
+    HEADER header;
+    local int start = FTell();
+    POINT2S uv[header.size/4];
+    pad(start, header.size);
+} UV;
+
+typedef struct {
+    HEADER header;
+    local int start = FTell();
+    char unk_data[header.size];
+    pad(start, header.size);
+} SKIN_NODE;
+
+typedef struct {
+    unsigned short gid[2];
+    unsigned short ne;
+    unsigned short e[ne];
+} ONE_ITEM;
+
+typedef struct {
+    HEADER header;
+    local int start = FTell();
+    while((FTell() - start) < header.size){
+        ONE_ITEM one_item;
     }
-    FSeek(data_start + new_header.size);
-}
+    pad(start, header.size);
+} ONE;
 
-/*local int i;
-local int tag_start;
-for(i=0; i < CHM_header.n_elems; i++){
-    tag_start = FTell();
-    header;
-    //unsigned int size;
-    FSeek(tag_start + CHM_header.size);*/
+typedef struct {
+    HEADER header;
+    local int start = FTell();
+    SKIN_NODE node[header.unknown00] <optimize=false>;
+    ONE one;
+    pad(start, header.size);
+} SKIN;
+
+typedef struct {
+    unsigned short elem[4];
+} ELEM4S;
+
+typedef struct {
+    unsigned short elem[5];
+} ELEM5S;
+
+typedef struct {
+    /*while(ReadByte() == 0x00){
+        FSkip(1);
+    }*/
+    unsigned char ltype;
+    unsigned short lsize;
+    //Printf("lsize: %d\n", lsize);
+    // TO-DO: Check ltype as a bitfield
+    switch (ltype) {
+        case 0x90:
+        case 0x91:
+        case 0x98:
+        case 0x99:
+            ELEM4S e[lsize];
+            break;
+        case 0x92:
+        case 0x9a:
+            ELEM5S e[lsize];
+            break;
+        default:
+            Printf("Not recognized: %x (Offset 0x%x)\n", ltype, FTell());
+    }
+} LST_E;
+
+typedef struct {
+    HEADER header;
+    local int start = FTell();
+    unsigned short id;
+    FSkip(header.size - header.unknown00 - sizeof(id));
+    while((FTell() - start) < (header.size - 30)){
+        //Printf("Read: %d - Size: %d\n", (FTell() - start), header.size);
+        LST_E lst_e;
+    }
+    pad(start, header.size);
+} DLST;
+
+typedef struct {
+    HEADER header;
+    local int start = FTell();
+    DLST dlst[header.unknown00] <optimize=false>;
+    pad(start, header.size);
+} DLHD;
+
+typedef struct {
+    HEADER header;
+    local int start = FTell();
+    INFO info;
+    NAME mnam;
+    VERT vert;
+    NORM norm;
+    COLR colr;
+    UV   uv;
+    SKIN skin;
+    DLHD dlhd;
+    pad(start, header.size);
+} MESH;
+
+typedef struct {
+    HEADER header;
+    local int start = FTell();
+    MESH mesh[header.unknown00] <optimize=false>;
+    pad(start, header.size);
+} MSSET;
+
+typedef struct {
+    HEADER header;
+    float matrix[12];
+} TFRM;
+
+typedef struct {
+    HEADER header;
+    local int start = FTell();
+    char unk_data[header.size];
+    pad(start, header.size);
+} MIDX;
+
+typedef struct {
+    HEADER header;
+    local int start = FTell();
+    char unk_data[header.size];
+    pad(start, header.size);
+} BINF;
+
+typedef struct {
+    HEADER header;
+    local int start = FTell();
+    INFO info;
+    NAME name;
+    if (info.unk_data[15] == 0x01){
+        NAME name2;
+    }
+    TFRM tfrm;
+    switch (header.unknown00){
+        case 0x01:
+            MIDX midx;
+            break;
+        /*case 0x02:
+            BINF binf;
+            break;*/
+    }
+    pad(start, header.size);
+} NODE;
+
+typedef struct {
+    HEADER header;
+    local int start = FTell();
+    NODE node[header.unknown00] <optimize=false>;
+    pad(start, header.size);
+} NSET;
+
+typedef struct {
+    HEADER header;
+    char unk_data[header.size];
+} BANK;
+
+typedef struct {
+    HEADER header;
+    INFO  info;
+    QUAN  quan;
+    MSET  mset;
+    MSSET msset;
+    NSET  nset;
+    BANK  bank;
+} CHM;
+
+CHM chm;
