@@ -215,17 +215,22 @@ typedef struct {
     local int start = FTell();
     INFO info;
     NAME name;
-    if (info.unk_data[15] == 0x01){
+    //if (info.unk_data[15] == 0x01){
+    local char next_tag[5];
+    ReadBytes(next_tag, FTell(), 4);
+    next_tag[4] = '\0';
+    if(next_tag == "NAM2"){
         NAME name2;
     }
+    //}
     TFRM tfrm;
     switch (header.unknown00){
         case 0x01:
             MIDX midx;
             break;
-        /*case 0x02:
+        case 0x02:
             BINF binf;
-            break;*/
+            break;
     }
     pad(start, header.size);
 } NODE;
